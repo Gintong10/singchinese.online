@@ -159,19 +159,6 @@ body {
   border-bottom: 1px solid rgba(20, 21, 28, 0.08);
 }
 
-.spotify-hero-head {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.75rem 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.spotify-hero-head-tools {
-  justify-content: flex-end;
-}
-
 .premium-badge {
   flex-shrink: 0;
   font-size: 0.72rem;
@@ -450,6 +437,14 @@ body {
   color: var(--muted);
 }
 
+.spotify-session > .premium-badge-session {
+  flex-shrink: 0;
+}
+
+.spotify-session > .premium-badge-session[hidden] {
+  display: none !important;
+}
+
 .spotify-display-name {
   font-size: 0.88rem;
   font-weight: 600;
@@ -531,6 +526,11 @@ body {
   gap: 0.45rem;
 }
 
+#spotifyLoginBtn[hidden],
+#spotifySessionRow[hidden] {
+  display: none !important;
+}
+
 .btn-sm {
   padding: 0.4rem 0.75rem;
   font-size: 0.82rem;
@@ -557,12 +557,39 @@ body {
   line-height: 1.4;
 }
 
-.player-row {
+.player-classic {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.player-transport {
+  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 0.65rem;
-  margin-bottom: 0.85rem;
+  gap: 1rem;
+}
+
+.player-status {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-skip {
+  min-width: 4rem;
+  padding: 0.58rem 1rem;
+  border-radius: 999px;
+  background: var(--paper-dim);
+  color: var(--ink-soft);
+  border: 1px solid rgba(20, 21, 28, 0.12);
+  font-weight: 600;
+  font-size: 0.82rem;
+  justify-content: center;
+}
+
+.btn-skip:hover {
+  background: var(--paper);
+  border-color: rgba(20, 21, 28, 0.18);
 }
 
 .btn {
@@ -594,6 +621,12 @@ body {
   box-shadow: 0 10px 28px rgba(184, 50, 42, 0.42);
 }
 
+.btn-primary.btn-play-main {
+  min-width: 5.75rem;
+  padding: 0.68rem 1.35rem;
+  border-radius: 999px;
+}
+
 .btn-ghost {
   background: var(--paper-dim);
   color: var(--ink-soft);
@@ -604,18 +637,18 @@ body {
   background: var(--paper);
 }
 
-.btn .pause-icon,
-.btn .btn-label-pause {
+#playBtn .pause-icon,
+#playBtn .btn-label-pause {
   display: none;
 }
 
-.btn.is-playing .play-icon,
-.btn.is-playing .btn-label-play {
+#playBtn.is-playing .play-icon,
+#playBtn.is-playing .btn-label-play {
   display: none;
 }
 
-.btn.is-playing .pause-icon,
-.btn.is-playing .btn-label-pause {
+#playBtn.is-playing .pause-icon,
+#playBtn.is-playing .btn-label-pause {
   display: inline;
 }
 

@@ -6,8 +6,11 @@
   let Sp = window.SingChineseSpotify;
 
   const TRACK_STORE_PREFIX = "singchinese_track_";
+  const SKIP_SEC = 5;
 
   const playBtn = $("playBtn");
+  const skipBackBtn = $("skipBackBtn");
+  const skipForwardBtn = $("skipForwardBtn");
   const seek = $("seek");
   const timeCurrent = $("timeCurrent");
   const timeTotal = $("timeTotal");
@@ -164,12 +167,29 @@
     }
   }
 
-  function applyTrackPick(track) {
+  async function applyTrackPick(track) {
     saveStoredTrackPick(getSelectedSongId(), track.id, formatPickLabel(track));
     if (spotifyTrackSearch) spotifyTrackSearch.value = "";
     hideTrackSearchResults();
     updateSelectedTrackRow();
     updateSpotifyUi();
+
+    if (!lyricData || !canStartSpotifyPlayback()) return;
+
+    pauseAll();
+    try {
+      await startSpotifyPlayback({ restartFromStart: true });
+    } catch (e) {
+      console.error(e);
+      if (spotifyHint) {
+        spotifyHint.textContent =
+          (e && e.message) ||
+          "Could not play (Premium required for Web Playback; pick another recording if needed).";
+      }
+      pauseAll();
+      setMode("idle");
+      updateUiTime(previewTimeSec, mediaDuration());
+    }
   }
 
   function showTrackSearchLoading() {
@@ -311,6 +331,29 @@
     return lyricsDuration();
   }
 
+  function skipBy(deltaSec) {
+    if (!lyricData) return;
+    const dur = mediaDuration();
+    let next;
+    if (mode === "spotify" && Sp) {
+      next = lastSpotifyTimeSec + deltaSec;
+      if (dur > 0) next = Math.min(next, dur);
+      next = Math.max(0, next);
+      clearTimeout(seekSpotifyTimer);
+      Sp.seekMs(next * 1000).catch(() => {});
+      lastSpotifyTimeSec = next;
+      updateUiTime(next, dur > 0 ? dur : Math.max(next, 0.001));
+      highlightLyrics(next);
+      return;
+    }
+    next = previewTimeSec + deltaSec;
+    if (dur > 0) next = Math.min(next, dur);
+    next = Math.max(0, next);
+    previewTimeSec = next;
+    updateUiTime(next, dur > 0 ? dur : Math.max(next, 0.001));
+    highlightLyrics(next);
+  }
+
   function setMode(next) {
     mode = next;
     modeBadge.classList.remove("is-demo");
@@ -407,13 +450,18 @@
     spotifyRafId = requestAnimationFrame(spotifyLoop);
   }
 
-  async function startSpotifyPlayback() {
+  async function startSpotifyPlayback(options) {
+    const restartFromStart = !!(options && options.restartFromStart);
     if (!Sp) throw new Error("Spotify module not loaded");
     const raw = getEffectiveSpotifyTrackId();
     if (!raw) throw new Error("Search for a track or set spotifyTrackId in songs.json");
     const uri = Sp.uriFromTrackId(raw);
     expectedSpotifyUri = uri;
     setMode("spotify");
+    if (restartFromStart) {
+      lastSpotifyTimeSec = 0;
+      updateUiTime(0, mediaDuration());
+    }
     await Sp.ensurePlayer();
     const state = await Sp.getPlaybackState();
     const currentUri =
@@ -423,10 +471,10 @@
       state.track_window.current_track.uri;
     const sameTrack = currentUri === uri;
     const explicitlyPaused = !!(state && state.paused);
-    if (sameTrack && explicitlyPaused) {
+    if (!restartFromStart && sameTrack && explicitlyPaused) {
       await Sp.resumePlayback();
     } else {
-      await Sp.playTrackUri(uri);
+      await Sp.playTrackUri(uri, restartFromStart ? 0 : undefined);
     }
     playBtn.classList.add("is-playing");
     playBtn.setAttribute("aria-pressed", "true");
@@ -513,6 +561,13 @@
     highlightLyrics(t);
   });
 
+  if (skipBackBtn) {
+    skipBackBtn.addEventListener("click", () => skipBy(-SKIP_SEC));
+  }
+  if (skipForwardBtn) {
+    skipForwardBtn.addEventListener("click", () => skipBy(SKIP_SEC));
+  }
+
   const spotifySearchField = document.querySelector(".spotify-search-field");
   document.addEventListener("click", (e) => {
     if (!spotifySearchResults || spotifySearchResults.hidden) return;
@@ -588,9 +643,9 @@
       li.append(en, py, zh);
       lyricsList.appendChild(li);
     });
-    const titleZh = lyricData.title || "absings";
+    const titleZh = lyricData.title || "singchinese";
     const titleEn = lyricData.titleEn ? ` (${lyricData.titleEn})` : "";
-    document.title = `${titleZh}${titleEn} — absings`;
+    document.title = `${titleZh}${titleEn} — singchinese`;
     previewTimeSec = 0;
     highlightLyrics(0);
   }
@@ -605,6 +660,11 @@
     seek.value = "0";
   }
 
+  function applySpotifyAuthChrome(loggedIn) {
+    if (spotifyLoginBtn) spotifyLoginBtn.hidden = loggedIn;
+    if (spotifySessionRow) spotifySessionRow.hidden = !loggedIn;
+  }
+
   function syncSpotifySetupBanner() {
     if (!spotifySetupBanner || !Sp) return;
     const hasId = !!Sp.getClientId();
@@ -617,14 +677,12 @@
     try {
       if (!Sp.isLoggedIn()) {
         cachedSpotifyMe = null;
-        spotifyLoginBtn.hidden = false;
-        spotifySessionRow.hidden = true;
+        applySpotifyAuthChrome(false);
         if (spotifyDisplayName) spotifyDisplayName.textContent = "";
         if (spotifyPremiumBadge) spotifyPremiumBadge.hidden = true;
         return;
       }
-      spotifyLoginBtn.hidden = true;
-      spotifySessionRow.hidden = false;
+      applySpotifyAuthChrome(true);
       cachedSpotifyMe = await Sp.getCurrentUser();
       if (spotifyDisplayName) {
         if (cachedSpotifyMe) {

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>absings</title>
+    <title>singchinese</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -20,7 +20,7 @@
         <div class="brand">
           <span class="brand-mark" aria-hidden="true">唱</span>
           <div>
-            <h1>absings</h1>
+            <h1>singchinese</h1>
           </div>
         </div>
 
@@ -42,6 +42,7 @@
               <span class="btn-spotify-label">Sign in</span>
             </button>
             <div id="spotifySessionRow" class="spotify-session" hidden>
+              <span id="spotifyPremiumBadge" class="premium-badge premium-badge-session" hidden></span>
               <div class="spotify-session-info">
                 <span class="spotify-signed-prefix">Signed in as:</span>
                 <span id="spotifyDisplayName" class="spotify-display-name"></span>
@@ -69,10 +70,6 @@
 
       <section class="panel controls-panel" aria-label="Playback">
         <div class="spotify-hero">
-          <div class="spotify-hero-head spotify-hero-head-tools">
-            <span id="spotifyPremiumBadge" class="premium-badge" hidden></span>
-          </div>
-
           <label class="field paste-field spotify-search-field">
             <input
               type="search"
@@ -100,16 +97,7 @@
           <p id="spotifyHint" class="spotify-hint"></p>
         </div>
 
-        <div class="player">
-          <div class="player-row">
-            <button type="button" id="playBtn" class="btn btn-primary" aria-pressed="false">
-              <span class="btn-icon play-icon" aria-hidden="true">▶</span>
-              <span class="btn-icon pause-icon" aria-hidden="true">⏸</span>
-              <span class="btn-label-play">Play</span>
-              <span class="btn-label-pause">Pause</span>
-            </button>
-            <span id="modeBadge" class="badge" role="status"></span>
-          </div>
+        <div class="player player-classic">
           <div class="scrub-wrap">
             <span id="timeCurrent" class="time">0:00</span>
             <input
@@ -122,6 +110,23 @@
               aria-label="Seek"
             />
             <span id="timeTotal" class="time">0:00</span>
+          </div>
+          <div class="player-transport">
+            <button type="button" id="skipBackBtn" class="btn btn-skip" aria-label="Back 5 seconds">
+              <span aria-hidden="true">−5s</span>
+            </button>
+            <button type="button" id="playBtn" class="btn btn-primary btn-play-main" aria-pressed="false">
+              <span class="btn-icon play-icon" aria-hidden="true">▶</span>
+              <span class="btn-icon pause-icon" aria-hidden="true">⏸</span>
+              <span class="btn-label-play">Play</span>
+              <span class="btn-label-pause">Pause</span>
+            </button>
+            <button type="button" id="skipForwardBtn" class="btn btn-skip" aria-label="Forward 5 seconds">
+              <span aria-hidden="true">+5s</span>
+            </button>
+          </div>
+          <div class="player-status">
+            <span id="modeBadge" class="badge" role="status"></span>
           </div>
         </div>
       </section>

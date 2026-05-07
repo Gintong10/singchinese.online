@@ -230,7 +230,7 @@
 
     // eslint-disable-next-line no-undef
     player = new Spotify.Player({
-      name: "absings web",
+      name: "singchinese web",
       getOAuthToken: function (cb) {
         getValidAccessToken().then(function (t) {
           return cb(t || "");
@@ -284,13 +284,17 @@
     });
   }
 
-  async function playTrackUri(trackUri) {
+  async function playTrackUri(trackUri, positionMs) {
     var _await$ensurePlayer = await ensurePlayer();
     var devId = _await$ensurePlayer.deviceId;
     if (!devId) throw new Error("Spotify player not ready");
     await transferPlaybackToThisDevice();
     var token = await getValidAccessToken();
     if (!token) throw new Error("Not authenticated");
+    var body = { uris: [trackUri] };
+    if (typeof positionMs === "number" && positionMs >= 0) {
+      body.position_ms = Math.floor(positionMs);
+    }
     var res = await fetch(
       "https://api.spotify.com/v1/me/player/play?device_id=" + encodeURIComponent(devId),
       {
@@ -299,7 +303,7 @@
           Authorization: "Bearer " + token,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ uris: [trackUri] }),
+        body: JSON.stringify(body),
       }
     );
     if (!res.ok && res.status !== 204) {
