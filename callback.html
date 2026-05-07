@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signing in…</title>
+    <script src="js/spotify-config.js"></script>
+  </head>
+  <body>
+    <p style="font-family: system-ui; padding: 1rem">Finishing Spotify sign-in…</p>
+    <script>
+      (function () {
+        var LS = {
+          ACCESS: "singchinese_spotify_access",
+          REFRESH: "singchinese_spotify_refresh",
+          EXPIRES: "singchinese_spotify_expires_at",
+          VERIFIER: "singchinese_spotify_code_verifier",
+          OAUTH_STATE: "singchinese_oauth_state",
+        };
+
+        function show(msg) {
+          document.querySelector("p").textContent = msg;
+        }
+
+        function redirectHome() {
+          var p = window.location.pathname || "/";
+          var i = p.lastIndexOf("/");
+          var dir = p.slice(0, i + 1);
+          window.location.replace(window.location.origin + dir);
+        }
+
+        var params = new URLSearchParams(window.location.search);
+        var err = params.get("error");
+        if (err) {
+          show("Spotify error: " + err);
+          sessionStorage.removeItem(LS.OAUTH_STATE);
+          setTimeout(redirectHome, 2500);
+          return;
+        }
+
+        var returnedState = params.get("state");
+        var expectedState = sessionStorage.getItem(LS.OAUTH_STATE);
+        if (!returnedState || !expectedState || returnedState !== expectedState) {
+          show("Sign-in could not be verified. Please try signing in again.");
+          sessionStorage.removeItem(LS.OAUTH_STATE);
+          setTimeout(redirectHome, 3000);
+          return;
+        }
+
+        var code = params.get("code");
+        if (!code) {
+          show("No authorization code. Returning…");
+          setTimeout(redirectHome, 1500);
+          return;
+        }
+
+        var clientId = window.SPOTIFY_CLIENT_ID;
+        if (!clientId) {
+          show("Set SPOTIFY_CLIENT_ID in js/spotify-config.js");
+          return;
+        }
+
+        var verifier = sessionStorage.getItem(LS.VERIFIER);
+        if (!verifier) {
+          show("Missing PKCE verifier. Try Connect again.");
+          setTimeout(redirectHome, 2000);
+          return;
+        }
+
+        var redirectUri =
+          window.location.origin + window.location.pathname.replace(/\?.*/, "");
+
+        fetch("https://accounts.spotify.com/api/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            client_id: clientId,
+            grant_type: "authorization_code",
+            code: code,
+            redirect_uri: redirectUri,
+            code_verifier: verifier,
+          }),
+        })
+          .then(function (r) {
+            return r.json().then(function (j) {
+              return { ok: r.ok, body: j };
+            });
+          })
+          .then(function (_ref) {
+            var ok = _ref.ok;
+            var body = _ref.body;
+            if (!ok) {
+              show((body && body.error_description) || "Token exchange failed");
+              setTimeout(redirectHome, 2500);
+              return;
+            }
+            var now = Date.now();
+            localStorage.setItem(LS.ACCESS, body.access_token);
+            if (body.refresh_token) {
+              localStorage.setItem(LS.REFRESH, body.refresh_token);
+            }
+            localStorage.setItem(LS.EXPIRES, String(now + (body.expires_in || 3600) * 1000 - 60000));
+            sessionStorage.removeItem(LS.VERIFIER);
+            sessionStorage.removeItem(LS.OAUTH_STATE);
+            redirectHome();
+          })
+          .catch(function () {
+            show("Network error during sign-in.");
+            setTimeout(redirectHome, 2500);
+          });
+      })();
+    </script>
+  </body>
+</html>

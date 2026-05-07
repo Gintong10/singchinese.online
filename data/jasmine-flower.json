@@ -1,0 +1,56 @@
+{
+  "title": "茉莉花",
+  "titleEn": "Jasmine Flower",
+  "artist": "Traditional folk song",
+  "lines": [
+    {
+      "start": 0,
+      "end": 4.2,
+      "zh": "好一朵美丽的茉莉花",
+      "pinyin": "hǎo yī duǒ měi lì de mò lì huā",
+      "en": "What a beautiful jasmine flower"
+    },
+    {
+      "start": 4.2,
+      "end": 8.4,
+      "zh": "好一朵美丽的茉莉花",
+      "pinyin": "hǎo yī duǒ měi lì de mò lì huā",
+      "en": "What a beautiful jasmine flower"
+    },
+    {
+      "start": 8.4,
+      "end": 12.6,
+      "zh": "芬芳美丽满枝桠",
+      "pinyin": "fēn fāng měi lì mǎn zhī yā",
+      "en": "Fragrant and lovely, filling the branches"
+    },
+    {
+      "start": 12.6,
+      "end": 16.8,
+      "zh": "又香又白人人夸",
+      "pinyin": "yòu xiāng yòu bái rén rén kuā",
+      "en": "Sweet and white, everyone praises it"
+    },
+    {
+      "start": 16.8,
+      "end": 21,
+      "zh": "让我来将你摘下",
+      "pinyin": "ràng wǒ lái jiāng nǐ zhāi xià",
+      "en": "Let me pick you"
+    },
+    {
+      "start": 21,
+      "end": 25.2,
+      "zh": "送给别人家",
+      "pinyin": "sòng gěi bié rén jiā",
+      "en": "And give you to someone else's home"
+    },
+    {
+      "start": 25.2,
+      "end": 29.4,
+      "zh": "茉莉花呀茉莉花",
+      "pinyin": "mò lì huā ya mò lì huā",
+      "en": "Jasmine flower, oh jasmine flower"
+    }
+  ]
+}

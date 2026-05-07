@@ -1,0 +1,18 @@
+{
+  "songs": [
+    {
+      "id": "jasmine-flower",
+      "title": "茉莉花 (Jasmine Flower)",
+      "artist": "Traditional",
+      "lyricsUrl": "data/jasmine-flower.json",
+      "spotifyTrackId": ""
+    },
+    {
+      "id": "childhood",
+      "title": "童年 (Childhood) — excerpt",
+      "artist": "Sample timing for practice",
+      "lyricsUrl": "data/childhood-excerpt.json",
+      "spotifyTrackId": ""
+    }
+  ]
+}

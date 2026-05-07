@@ -1,0 +1,35 @@
+{
+  "title": "童年",
+  "titleEn": "Childhood (excerpt)",
+  "artist": "Lo Ta-yu (sample lyrics for layout demo)",
+  "lines": [
+    {
+      "start": 0,
+      "end": 4,
+      "zh": "池塘边的榕树上",
+      "pinyin": "chí táng biān de róng shù shàng",
+      "en": "On the banyan tree by the pond"
+    },
+    {
+      "start": 4,
+      "end": 8,
+      "zh": "知了在声声叫着夏天",
+      "pinyin": "zhī liǎo zài shēng shēng jiào zhe xià tiān",
+      "en": "Cicadas call out the summer, again and again"
+    },
+    {
+      "start": 8,
+      "end": 12,
+      "zh": "操场边的秋千上",
+      "pinyin": "cāo chǎng biān de qiū qiān shàng",
+      "en": "On the swing by the playground"
+    },
+    {
+      "start": 12,
+      "end": 16,
+      "zh": "只有蝴蝶停在上面",
+      "pinyin": "zhǐ yǒu hú dié tíng zài shàng miàn",
+      "en": "Only butterflies rest there"
+    }
+  ]
+}
