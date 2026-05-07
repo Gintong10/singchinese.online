@@ -55,8 +55,7 @@ body {
 }
 
 .site-header,
-.main,
-.site-footer {
+.main {
   position: relative;
   z-index: 1;
 }
@@ -169,16 +168,8 @@ body {
   margin-bottom: 0.75rem;
 }
 
-.spotify-brand-label {
-  display: block;
-  margin-bottom: 0.35rem !important;
-}
-
-.spotify-lede {
-  margin: 0;
-  max-width: 34rem;
-  font-size: 0.92rem;
-  color: var(--muted);
+.spotify-hero-head-tools {
+  justify-content: flex-end;
 }
 
 .premium-badge {
@@ -442,7 +433,21 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0.75rem;
+  justify-content: flex-end;
+  gap: 0.5rem 1rem;
+}
+
+.spotify-session-info {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.spotify-signed-prefix {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--muted);
 }
 
 .spotify-display-name {
@@ -751,25 +756,6 @@ body {
 .lyric-line.is-active .py {
   color: var(--jade);
   font-weight: 600;
-}
-
-.site-footer {
-  max-width: 920px;
-  margin: 0 auto;
-  padding: 0 1.5rem 2.5rem;
-}
-
-.site-footer p {
-  margin: 0;
-  font-size: 0.82rem;
-  color: var(--muted);
-}
-
-.site-footer code {
-  font-size: 0.78em;
-  background: rgba(20, 21, 28, 0.06);
-  padding: 0.12rem 0.35rem;
-  border-radius: 6px;
 }
 
 @media (prefers-reduced-motion: reduce) {

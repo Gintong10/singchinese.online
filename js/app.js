@@ -24,7 +24,6 @@
   const spotifySelectedLabel = $("spotifySelectedLabel");
   const spotifyClearTrackBtn = $("spotifyClearTrackBtn");
   const spotifyPremiumBadge = $("spotifyPremiumBadge");
-  const footerRedirectHint = $("footerRedirectHint");
   const spotifySetupBanner = $("spotifySetupBanner");
   const setupBannerRedirect = $("setupBannerRedirect");
 
@@ -38,7 +37,6 @@
   /** @type {"idle" | "spotify"} */
   let mode = "idle";
 
-  let lastActiveLine = -1;
   let spotifyRafId = 0;
   let lastSpotifyTimeSec = 0;
   let lastSpotifyDurationSec = 0;
@@ -342,7 +340,6 @@
   function highlightLyrics(t) {
     if (!lyricData) return;
     const lines = lyricsList.querySelectorAll(".lyric-line");
-    let activeIndex = -1;
     lyricData.lines.forEach((line, i) => {
       const el = lines[i];
       if (!el) return;
@@ -353,16 +350,8 @@
         el.classList.add("is-future");
       } else {
         el.classList.add("is-active");
-        activeIndex = i;
       }
     });
-    if (activeIndex >= 0 && activeIndex !== lastActiveLine) {
-      lastActiveLine = activeIndex;
-      const activeEl = lines[activeIndex];
-      activeEl.scrollIntoView({ block: "center", behavior: "smooth" });
-    } else if (activeIndex < 0) {
-      lastActiveLine = -1;
-    }
   }
 
   function updateUiTime(current, duration) {
@@ -582,7 +571,6 @@
   }
 
   function renderLyrics() {
-    lastActiveLine = -1;
     lyricsList.innerHTML = "";
     if (!lyricData) return;
     lyricData.lines.forEach((line) => {
@@ -600,9 +588,9 @@
       li.append(en, py, zh);
       lyricsList.appendChild(li);
     });
-    const titleZh = lyricData.title || "SingChinese";
+    const titleZh = lyricData.title || "absings";
     const titleEn = lyricData.titleEn ? ` (${lyricData.titleEn})` : "";
-    document.title = `${titleZh}${titleEn} — SingChinese`;
+    document.title = `${titleZh}${titleEn} — absings`;
     previewTimeSec = 0;
     highlightLyrics(0);
   }
@@ -641,9 +629,9 @@
       if (spotifyDisplayName) {
         if (cachedSpotifyMe) {
           spotifyDisplayName.textContent =
-            "Signed in as " + (cachedSpotifyMe.display_name || cachedSpotifyMe.id || "listener");
+            cachedSpotifyMe.display_name || cachedSpotifyMe.id || "listener";
         } else {
-          spotifyDisplayName.textContent = "Signed in";
+          spotifyDisplayName.textContent = "listener";
         }
       }
       applyPremiumFromMe(cachedSpotifyMe);
@@ -708,9 +696,6 @@
   async function init() {
     Sp = window.SingChineseSpotify || Sp;
 
-    if (footerRedirectHint && Sp) {
-      footerRedirectHint.textContent = Sp.redirectUri();
-    }
     syncSpotifySetupBanner();
 
     if (spotifyLoginBtn) {

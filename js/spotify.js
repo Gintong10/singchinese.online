@@ -230,7 +230,7 @@
 
     // eslint-disable-next-line no-undef
     player = new Spotify.Player({
-      name: "SingChinese web",
+      name: "absings web",
       getOAuthToken: function (cb) {
         getValidAccessToken().then(function (t) {
           return cb(t || "");

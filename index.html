@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SingChinese — sing along with Spotify</title>
+    <title>absings</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -20,7 +20,7 @@
         <div class="brand">
           <span class="brand-mark" aria-hidden="true">唱</span>
           <div>
-            <h1>SingChinese</h1>
+            <h1>absings</h1>
           </div>
         </div>
 
@@ -42,7 +42,10 @@
               <span class="btn-spotify-label">Sign in</span>
             </button>
             <div id="spotifySessionRow" class="spotify-session" hidden>
-              <span id="spotifyDisplayName" class="spotify-display-name"></span>
+              <div class="spotify-session-info">
+                <span class="spotify-signed-prefix">Signed in as:</span>
+                <span id="spotifyDisplayName" class="spotify-display-name"></span>
+              </div>
               <button type="button" id="spotifyLogoutBtn" class="btn btn-ghost btn-sm">
                 Log out
               </button>
@@ -66,19 +69,11 @@
 
       <section class="panel controls-panel" aria-label="Playback">
         <div class="spotify-hero">
-          <div class="spotify-hero-head">
-            <div>
-              <span class="field-label spotify-brand-label">Track</span>
-              <p class="spotify-lede">
-                Search Spotify for a track, then press Play. Audio streams through Spotify in this tab
-                only.
-              </p>
-            </div>
+          <div class="spotify-hero-head spotify-hero-head-tools">
             <span id="spotifyPremiumBadge" class="premium-badge" hidden></span>
           </div>
 
           <label class="field paste-field spotify-search-field">
-            <span class="field-label">Find track on Spotify</span>
             <input
               type="search"
               id="spotifyTrackSearch"
@@ -86,6 +81,7 @@
               autocomplete="off"
               spellcheck="false"
               placeholder="What do you want to play?"
+              aria-label="Search Spotify"
               role="combobox"
               aria-autocomplete="list"
               aria-controls="spotifySearchResults"
@@ -136,14 +132,6 @@
         </div>
       </section>
     </main>
-
-    <footer class="site-footer">
-      <p>
-        Spotify only: set Client ID in <code>js/spotify-config.js</code> and whitelist redirect
-        <code id="footerRedirectHint"></code>. Edit <code>data/songs.json</code> and lyric JSON for
-        your lesson.
-      </p>
-    </footer>
 
     <!-- Load order matters: config → spotify module → app (no defer; avoids missing SingChineseSpotify when app binds listeners). -->
     <script src="js/spotify-config.js"></script>
