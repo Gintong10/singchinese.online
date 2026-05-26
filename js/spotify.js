@@ -117,7 +117,7 @@
     }
     if (!window.crypto || !window.crypto.subtle) {
       throw new Error(
-        "Web Crypto API unavailable — use http://127.0.0.1 or http://localhost (not file://)."
+        "Web Crypto API unavailable — use http://127.0.0.1:8080 (not file:// or localhost)."
       );
     }
     var verifier = randomString(64);
@@ -378,7 +378,33 @@
     }
   }
 
-  /** @returns {Promise<Array<{ id: string, uri: string, name: string, artists: string, durationMs: number, albumArtUrl: string }>>} */
+  function mapSpotifyTrackItem(t) {
+    var artists = (t.artists || [])
+      .map(function (a) {
+        return a.name;
+      })
+      .join(", ");
+    var imgs = t.album && t.album.images;
+    var artUrl = "";
+    if (imgs && imgs.length) {
+      var preferred = imgs.filter(function (im) {
+        return im.width >= 40 && im.width <= 64;
+      });
+      var pick = preferred.length ? preferred[0] : imgs[imgs.length - 1];
+      artUrl = (pick && pick.url) || "";
+    }
+    return {
+      id: t.id,
+      uri: t.uri,
+      name: t.name,
+      artists: artists,
+      albumName: (t.album && t.album.name) || "",
+      durationMs: t.duration_ms || 0,
+      albumArtUrl: artUrl,
+    };
+  }
+
+  /** @returns {Promise<Array<{ id: string, uri: string, name: string, artists: string, albumName: string, durationMs: number, albumArtUrl: string }>>} */
   async function searchTracks(query, limit) {
     var q = (query || "").trim();
     if (!q) return [];
@@ -392,30 +418,33 @@
     });
     var data = await api("GET", "/search?" + params.toString(), undefined);
     var items = (data && data.tracks && data.tracks.items) || [];
-    return items.map(function (t) {
-      var artists = (t.artists || [])
-        .map(function (a) {
-          return a.name;
-        })
-        .join(", ");
-      var imgs = t.album && t.album.images;
-      var artUrl = "";
-      if (imgs && imgs.length) {
-        var preferred = imgs.filter(function (im) {
-          return im.width >= 40 && im.width <= 64;
-        });
-        var pick = preferred.length ? preferred[0] : imgs[imgs.length - 1];
-        artUrl = (pick && pick.url) || "";
-      }
-      return {
-        id: t.id,
-        uri: t.uri,
-        name: t.name,
-        artists: artists,
-        durationMs: t.duration_ms || 0,
-        albumArtUrl: artUrl,
-      };
-    });
+    return items.map(mapSpotifyTrackItem);
+  }
+
+  /** @returns {Promise<{ id: string, uri: string, name: string, artists: string, albumName: string, durationMs: number, albumArtUrl: string } | null>} */
+  async function getTrack(trackId) {
+    var id = (trackId || "").trim();
+    if (!id) return null;
+    if (id.indexOf("spotify:track:") === 0) {
+      id = id.slice("spotify:track:".length);
+    }
+    var open = id.match(/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?track\/([a-zA-Z0-9]+)/);
+    if (open) id = open[1];
+    try {
+      var data = await api("GET", "/tracks/" + encodeURIComponent(id), undefined);
+      return data ? mapSpotifyTrackItem(data) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** Active playback on any Spotify device (null if nothing playing). */
+  async function getRemotePlayback() {
+    try {
+      return await api("GET", "/me/player", undefined);
+    } catch (e) {
+      return null;
+    }
   }
 
   /** Public profile for “signed in as …” (after login). */
@@ -452,6 +481,8 @@
     getBillingProduct: getBillingProduct,
     getCurrentUser: getCurrentUser,
     searchTracks: searchTracks,
+    getTrack: getTrack,
+    getRemotePlayback: getRemotePlayback,
     uriFromTrackId: function (id) {
       if (!id || typeof id !== "string") return "";
       var trimmed = id.trim();

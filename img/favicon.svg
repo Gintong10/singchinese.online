@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="singchinese.online">
+  <defs>
+    <linearGradient id="brand-gradient" x1="86%" y1="14%" x2="14%" y2="86%">
+      <stop offset="0%" stop-color="#1f6f5e" />
+      <stop offset="100%" stop-color="#134a3f" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="12" fill="url(#brand-gradient)" />
+  <text
+    x="24"
+    y="32"
+    text-anchor="middle"
+    font-family="'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+    font-size="30"
+    font-weight="700"
+    fill="#f6f3ec"
+  >唱</text>
+</svg>

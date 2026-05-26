@@ -1,9 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <script>
+      if (location.hostname === "localhost") {
+        location.replace(location.href.replace(location.hostname, "127.0.0.1"));
+      }
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Signing in…</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="img/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="img/favicon-16.png" type="image/png" sizes="16x16" />
+    <link rel="icon" href="img/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
     <script src="js/spotify-config.js"></script>
   </head>
   <body>
