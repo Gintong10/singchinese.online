@@ -389,6 +389,11 @@ body {
   font-size: 0.85em;
 }
 
+.setup-banner-translator {
+  border-color: rgba(31, 111, 94, 0.35);
+  background: linear-gradient(145deg, rgba(232, 248, 243, 0.98), rgba(210, 240, 230, 0.9));
+}
+
 .btn-spotify-oauth {
   overflow: visible;
   align-items: center;

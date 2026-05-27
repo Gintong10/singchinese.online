@@ -34,6 +34,9 @@
   const spotifyPremiumBadge = $("spotifyPremiumBadge");
   const spotifySetupBanner = $("spotifySetupBanner");
   const setupBannerRedirect = $("setupBannerRedirect");
+  const translatorSetupBanner = $("translatorSetupBanner");
+  const translatorSetupBannerTitle = $("translatorSetupBannerTitle");
+  const translatorSetupBannerBody = $("translatorSetupBannerBody");
   const lyricsLessonSearch = $("lyricsLessonSearch");
   const lyricsLessonSearchResults = $("lyricsLessonSearchResults");
   const lyricsSelectedRow = $("lyricsSelectedRow");
@@ -86,6 +89,8 @@
   /** Reused across lines until script preference changes. */
   let browserTranslator = null;
   let browserTranslatorSourceLang = "";
+  let translatorGestureRetryHandler = null;
+  let translatorGestureListenerBound = false;
   let activeWordBtn = null;
   const wordMeaningCache = new Map();
   let pinyinSegmentDictReady = false;
@@ -682,6 +687,118 @@
       availability === "downloadable" ||
       availability === "downloading"
     );
+  }
+
+  function syncTranslatorSetupBanner(mode, detail) {
+    if (!translatorSetupBanner || !translatorSetupBannerTitle || !translatorSetupBannerBody) return;
+    if (mode === "hidden") {
+      translatorSetupBanner.hidden = true;
+      return;
+    }
+    translatorSetupBanner.hidden = false;
+    if (mode === "checking") {
+      translatorSetupBannerTitle.textContent = "Checking Chrome translation…";
+      translatorSetupBannerBody.textContent =
+        "English glosses for LRCLIB lyrics use Chrome’s built-in Translator on your device.";
+      return;
+    }
+    if (mode === "downloading") {
+      const pct =
+        detail && typeof detail.loaded === "number"
+          ? Math.round(detail.loaded * 100)
+          : 0;
+      translatorSetupBannerTitle.textContent = "Downloading Chrome translation model…";
+      translatorSetupBannerBody.textContent =
+        pct > 0
+          ? "Progress: " + pct + "%. This runs once and stays on your device."
+          : "Starting download for Chinese → English. This may take a minute.";
+      return;
+    }
+    if (mode === "needs-gesture") {
+      translatorSetupBannerTitle.textContent = "Click anywhere to enable English translation";
+      translatorSetupBannerBody.textContent =
+        "Chrome needs a tap or click on this page before it can download the on-device translation model.";
+      return;
+    }
+    translatorSetupBannerTitle.textContent = "English translation unavailable in this browser";
+    translatorSetupBannerBody.innerHTML =
+      "Use <strong>desktop Chrome 138+</strong>. Enable " +
+      '<a href="chrome://flags/#language-detection-api">language-detection-api</a> and ' +
+      '<a href="chrome://flags/#optimization-guide-on-device-model">optimization-guide-on-device-model</a>, ' +
+      'update <a href="chrome://components/">Optimization Guide On Device Model</a> in ' +
+      "<code>chrome://components/</code>, restart Chrome, then reload this page. " +
+      "Chinese and pinyin still work without it.";
+  }
+
+  function bindTranslatorGestureRetry(enable) {
+    if (!enable) {
+      if (translatorGestureRetryHandler) {
+        document.removeEventListener("pointerdown", translatorGestureRetryHandler);
+        document.removeEventListener("keydown", translatorGestureRetryHandler);
+        translatorGestureRetryHandler = null;
+      }
+      translatorGestureListenerBound = false;
+      return;
+    }
+    if (translatorGestureListenerBound) return;
+    translatorGestureRetryHandler = async () => {
+      bindTranslatorGestureRetry(false);
+      const ok = await ensureBrowserTranslatorReady();
+      if (ok) await retryLyricsTranslationIfNeeded();
+    };
+    document.addEventListener("pointerdown", translatorGestureRetryHandler, { once: true });
+    document.addEventListener("keydown", translatorGestureRetryHandler, { once: true });
+    translatorGestureListenerBound = true;
+  }
+
+  async function retryLyricsTranslationIfNeeded() {
+    if (!lyricSource || lyricSource.kind !== "lrclib") return;
+    if (!lyricData || !lyricData.translationUnavailable) return;
+    const cacheKey = [lyricSource.cacheKey, scriptPreference, "browser-translator"].join("|");
+    lineProcessCache.delete(cacheKey);
+    try {
+      await renderLyricSource(lyricSource);
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
+  async function ensureBrowserTranslatorReady() {
+    const sourceLang = getTranslationSourceLanguage();
+    if (browserTranslator && browserTranslatorSourceLang === sourceLang) {
+      syncTranslatorSetupBanner("hidden");
+      return true;
+    }
+
+    if (!browserTranslatorSupported()) {
+      syncTranslatorSetupBanner("unavailable");
+      return false;
+    }
+
+    syncTranslatorSetupBanner("checking");
+    if (!(await canUseBrowserTranslator(sourceLang))) {
+      syncTranslatorSetupBanner("unavailable");
+      return false;
+    }
+
+    try {
+      syncTranslatorSetupBanner("downloading", { loaded: 0 });
+      await getBrowserTranslator(sourceLang, (update) => {
+        if (update.phase === "download") {
+          syncTranslatorSetupBanner("downloading", { loaded: update.loaded });
+        }
+      });
+      syncTranslatorSetupBanner("hidden");
+      bindTranslatorGestureRetry(false);
+      return true;
+    } catch (e) {
+      console.warn(e);
+      browserTranslator = null;
+      browserTranslatorSourceLang = "";
+      syncTranslatorSetupBanner("needs-gesture");
+      bindTranslatorGestureRetry(true);
+      return false;
+    }
   }
 
   async function getBrowserTranslator(sourceLang, onProgress) {
@@ -1748,6 +1865,9 @@
       if (!lyricSource) return;
       setLyricsStatus("Updating lyric script…", "loading");
       try {
+        browserTranslator = null;
+        browserTranslatorSourceLang = "";
+        await ensureBrowserTranslatorReady();
         await renderLyricSource(lyricSource);
       } catch (e) {
         console.warn(e);
@@ -1902,7 +2022,7 @@
   async function init() {
     Sp = window.SingChineseSpotify || Sp;
 
-    await ensurePinyinSegmentDict();
+    await Promise.all([ensurePinyinSegmentDict(), ensureBrowserTranslatorReady()]);
 
     updateScriptToggleUi();
     syncSpotifySetupBanner();
