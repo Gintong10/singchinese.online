@@ -887,6 +887,43 @@
     return data;
   }
 
+  async function fetchLrclibById(lrclibId) {
+    const id = String(lrclibId || "").trim();
+    if (!id) return null;
+    const res = await fetch(LRCLIB_BASE_URL + "/api/get/" + encodeURIComponent(id));
+    if (res.status === 404) return null;
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new Error((data && data.message) || "LRCLIB lookup failed");
+    }
+    return data;
+  }
+
+  async function loadLrclibFromCatalogEntry(entry) {
+    if (!entry || entry.lrclibId == null || entry.lrclibId === "") return false;
+    const seq = ++lrclibSeq;
+    setLyricsStatus("Loading lyrics…", "loading");
+    try {
+      const record = await fetchLrclibById(entry.lrclibId);
+      if (seq !== lrclibSeq) return false;
+      if (!record) return false;
+      await renderLrclibRecord(record, {
+        name: entry.title || record.trackName,
+        artists: entry.artist || record.artistName,
+        durationMs: (Number(record.duration) || 0) * 1000,
+      });
+      return true;
+    } catch (e) {
+      if (seq !== lrclibSeq) return false;
+      console.warn(e);
+      setLyricsStatus(
+        "Could not load LRCLIB lyrics: " + (e && e.message ? e.message : String(e)),
+        "error"
+      );
+      return false;
+    }
+  }
+
   async function renderLrclibRecord(record, fallback) {
     const fb = fallback || {};
     if (!record || record.instrumental) {
@@ -1002,7 +1039,7 @@
   }
 
   async function applyLyricsLessonPick(entry) {
-    if (!entry || !entry.lyricsUrl) return;
+    if (!entry) return;
     window.clearTimeout(lyricsSearchTimer);
     hideLyricsSearchResults();
     if (lyricsLessonSearch) lyricsLessonSearch.value = "";
@@ -1012,6 +1049,16 @@
     catalogLessonId = entry.id || entry.lyricsUrl || "default";
     catalogDefaultTrackId =
       entry.spotifyTrackId != null ? String(entry.spotifyTrackId).trim() : "";
+    if (entry.lrclibId != null && entry.lrclibId !== "") {
+      hideWordPopover();
+      const loaded = await loadLrclibFromCatalogEntry(entry);
+      if (loaded) {
+        updateSelectedTrackRow();
+        updateSpotifyUi();
+        return;
+      }
+    }
+    if (!entry.lyricsUrl) return;
     try {
       await loadLyrics(entry.lyricsUrl);
     } catch (e) {
@@ -1136,6 +1183,10 @@
         await syncPlaybackPositionToSongSpot();
         return;
       }
+    }
+    if (catalogPrimary && catalogPrimary.lrclibId != null && catalogPrimary.lrclibId !== "") {
+      const loaded = await loadLrclibFromCatalogEntry(catalogPrimary);
+      if (loaded) return;
     }
     if (catalogPrimary && catalogPrimary.lyricsUrl) {
       await loadLyrics(catalogPrimary.lyricsUrl);
