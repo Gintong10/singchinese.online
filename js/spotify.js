@@ -27,10 +27,10 @@
   }
 
   function redirectUri() {
-    var p = window.location.pathname || "/";
-    var i = p.lastIndexOf("/");
-    var dir = p.slice(0, i + 1);
-    return window.location.origin + dir + "callback.html";
+    if (typeof window.singchineseSpotifyRedirectUri === "function") {
+      return window.singchineseSpotifyRedirectUri();
+    }
+    return window.location.origin + "/callback.html";
   }
 
   function randomString(len) {
@@ -125,17 +125,21 @@
     sessionStorage.setItem(LS.VERIFIER, verifier);
     var oauthState = randomString(32);
     sessionStorage.setItem(LS.OAUTH_STATE, oauthState);
+    var redirect = redirectUri();
     var url =
       "https://accounts.spotify.com/authorize?" +
       new URLSearchParams({
         client_id: clientId,
         response_type: "code",
-        redirect_uri: redirectUri(),
+        redirect_uri: redirect,
         scope: SCOPES,
         code_challenge_method: "S256",
         code_challenge: challenge,
         state: oauthState,
       });
+    try {
+      sessionStorage.setItem("singchinese_spotify_redirect_uri", redirect);
+    } catch (_) {}
     // Full browser navigation to Spotify login + consent (accounts.spotify.com)
     window.location.href = url;
   }

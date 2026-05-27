@@ -78,7 +78,13 @@
         }
 
         var redirectUri =
-          window.location.origin + window.location.pathname.replace(/\?.*/, "");
+          typeof window.singchineseSpotifyRedirectUri === "function"
+            ? window.singchineseSpotifyRedirectUri()
+            : window.location.origin + window.location.pathname.replace(/\?.*/, "");
+        try {
+          var storedRedirect = sessionStorage.getItem("singchinese_spotify_redirect_uri");
+          if (storedRedirect) redirectUri = storedRedirect;
+        } catch (_) {}
 
         fetch("https://accounts.spotify.com/api/token", {
           method: "POST",
