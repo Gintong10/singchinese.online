@@ -80,6 +80,7 @@
   let lyricsSearchHighlightIdx = -1;
 
   const SCRIPT_PREF_KEY = "singchinese_script_pref";
+  const LYRIC_TRANSLATION_CACHE_API = "/api/translation-cache";
   const LRCLIB_BASE_URL = "https://lrclib.net";
   const lineProcessCache = new Map();
   const openccConverters = {};
@@ -145,6 +146,61 @@
     browserTranslator = null;
     browserTranslatorSourceLang = "";
     updateScriptToggleUi();
+  }
+
+  function lyricTranslationSharedKey(source) {
+    if (!source || source.kind !== "lrclib" || !source.cacheKey) return "";
+    return [source.cacheKey, scriptPreference, "browser-translator-en-v1"].join("|");
+  }
+
+  function lyricTranslationLinesFingerprint(texts) {
+    return texts.join("\u001e");
+  }
+
+  function normalizeCachedLyricTranslation(entry, displayTexts) {
+    if (!entry || !Array.isArray(entry.english)) return null;
+    if (entry.linesHash !== lyricTranslationLinesFingerprint(displayTexts)) return null;
+    if (entry.english.length !== displayTexts.length) return null;
+    if (!entry.english.some((line) => line && String(line).trim())) return null;
+    return entry.english.map((line) => String(line || ""));
+  }
+
+  async function loadSharedLyricTranslation(source, displayTexts) {
+    const sharedKey = lyricTranslationSharedKey(source);
+    if (!sharedKey || !displayTexts.length) return null;
+    try {
+      const res = await fetch(
+        LYRIC_TRANSLATION_CACHE_API + "?key=" + encodeURIComponent(sharedKey),
+        { headers: { accept: "application/json" } }
+      );
+      if (!res.ok) return null;
+      return normalizeCachedLyricTranslation(await res.json(), displayTexts);
+    } catch (e) {
+      console.warn("Shared lyric translation cache read failed", e);
+      return null;
+    }
+  }
+
+  async function saveSharedLyricTranslation(source, displayTexts, english) {
+    const sharedKey = lyricTranslationSharedKey(source);
+    if (!sharedKey || !displayTexts.length || !Array.isArray(english)) return;
+    if (!english.some((line) => line && String(line).trim())) return;
+    const payload = {
+      key: sharedKey,
+      linesHash: lyricTranslationLinesFingerprint(displayTexts),
+      english: english.map((line) => String(line || "")),
+      savedAt: Date.now(),
+    };
+    try {
+      const res = await fetch(LYRIC_TRANSLATION_CACHE_API, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) console.warn("Shared lyric translation cache save failed", res.status);
+    } catch (e) {
+      console.warn("Shared lyric translation cache save failed", e);
+    }
   }
 
   function updateScriptToggleUi() {
@@ -946,10 +1002,14 @@
     let translationUnavailable = false;
 
     if (source.kind === "lrclib" && displayTexts.length) {
-      if (browserTranslatorSupported()) {
+      const cachedEnglish = await loadSharedLyricTranslation(source, displayTexts);
+      if (cachedEnglish) {
+        english = cachedEnglish;
+      } else if (browserTranslatorSupported()) {
         const translated = await translateLinesWithBrowser(displayTexts, reportBrowserTranslationProgress);
         if (translated && translated.some((line) => line && line.trim())) {
           english = translated;
+          await saveSharedLyricTranslation(source, displayTexts, english);
         } else {
           translationUnavailable = true;
           english = displayTexts.map(() => "");
