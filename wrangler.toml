@@ -1,0 +1,7 @@
+name = "singchinese-online"
+compatibility_date = "2026-05-29"
+pages_build_output_dir = "."
+
+[[kv_namespaces]]
+binding = "LYRIC_TRANSLATION_CACHE"
+id = "23f6dfa32be9402b9aa270eebb3d9ee6"
