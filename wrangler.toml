@@ -1,4 +1,4 @@
-name = "singchinese-online"
+name = "singchineseonline"
 main = "worker.js"
 compatibility_date = "2026-05-29"
 
