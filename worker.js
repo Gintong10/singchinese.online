@@ -32,7 +32,7 @@ function cacheStore(env) {
 function normalizeKey(key) {
   const value = String(key || "").trim();
   if (!value || value.length > MAX_KEY_LENGTH) return "";
-  if (!value.startsWith("lrclib:")) return "";
+  if (!value.startsWith("lrclib:") && !value.startsWith("lyric-lines:")) return "";
   if (!value.endsWith("|browser-translator-en-v1")) return "";
   return value;
 }

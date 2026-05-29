@@ -157,6 +157,32 @@
     return texts.join("\u001e");
   }
 
+  function lyricTranslationContentHash(texts) {
+    const input = lyricTranslationLinesFingerprint(texts);
+    let hash = 2166136261;
+    for (let i = 0; i < input.length; i++) {
+      hash ^= input.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(36);
+  }
+
+  function lyricTranslationSharedKeys(source, displayTexts) {
+    const keys = [];
+    const sourceKey = lyricTranslationSharedKey(source);
+    if (sourceKey) keys.push(sourceKey);
+    if (displayTexts && displayTexts.length) {
+      keys.push(
+        [
+          "lyric-lines:" + lyricTranslationContentHash(displayTexts),
+          scriptPreference,
+          "browser-translator-en-v1",
+        ].join("|")
+      );
+    }
+    return [...new Set(keys)];
+  }
+
   function normalizeCachedLyricTranslation(entry, displayTexts) {
     if (!entry || !Array.isArray(entry.english)) return null;
     if (entry.linesHash !== lyricTranslationLinesFingerprint(displayTexts)) return null;
@@ -166,40 +192,44 @@
   }
 
   async function loadSharedLyricTranslation(source, displayTexts) {
-    const sharedKey = lyricTranslationSharedKey(source);
-    if (!sharedKey || !displayTexts.length) return null;
-    try {
-      const res = await fetch(
-        LYRIC_TRANSLATION_CACHE_API + "?key=" + encodeURIComponent(sharedKey),
-        { headers: { accept: "application/json" } }
-      );
-      if (!res.ok) return null;
-      return normalizeCachedLyricTranslation(await res.json(), displayTexts);
-    } catch (e) {
-      console.warn("Shared lyric translation cache read failed", e);
-      return null;
+    if (!displayTexts.length) return null;
+    for (const sharedKey of lyricTranslationSharedKeys(source, displayTexts)) {
+      try {
+        const res = await fetch(
+          LYRIC_TRANSLATION_CACHE_API + "?key=" + encodeURIComponent(sharedKey),
+          { headers: { accept: "application/json" } }
+        );
+        if (!res.ok) continue;
+        const cached = normalizeCachedLyricTranslation(await res.json(), displayTexts);
+        if (cached) return cached;
+      } catch (e) {
+        console.warn("Shared lyric translation cache read failed", e);
+      }
     }
+    return null;
   }
 
   async function saveSharedLyricTranslation(source, displayTexts, english) {
-    const sharedKey = lyricTranslationSharedKey(source);
-    if (!sharedKey || !displayTexts.length || !Array.isArray(english)) return;
+    const sharedKeys = lyricTranslationSharedKeys(source, displayTexts);
+    if (!sharedKeys.length || !displayTexts.length || !Array.isArray(english)) return;
     if (!english.some((line) => line && String(line).trim())) return;
-    const payload = {
-      key: sharedKey,
-      linesHash: lyricTranslationLinesFingerprint(displayTexts),
-      english: english.map((line) => String(line || "")),
-      savedAt: Date.now(),
-    };
-    try {
-      const res = await fetch(LYRIC_TRANSLATION_CACHE_API, {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) console.warn("Shared lyric translation cache save failed", res.status);
-    } catch (e) {
-      console.warn("Shared lyric translation cache save failed", e);
+    for (const sharedKey of sharedKeys) {
+      const payload = {
+        key: sharedKey,
+        linesHash: lyricTranslationLinesFingerprint(displayTexts),
+        english: english.map((line) => String(line || "")),
+        savedAt: Date.now(),
+      };
+      try {
+        const res = await fetch(LYRIC_TRANSLATION_CACHE_API, {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) console.warn("Shared lyric translation cache save failed", res.status);
+      } catch (e) {
+        console.warn("Shared lyric translation cache save failed", e);
+      }
     }
   }
 
@@ -1005,6 +1035,7 @@
       const cachedEnglish = await loadSharedLyricTranslation(source, displayTexts);
       if (cachedEnglish) {
         english = cachedEnglish;
+        await saveSharedLyricTranslation(source, displayTexts, english);
       } else if (browserTranslatorSupported()) {
         const translated = await translateLinesWithBrowser(displayTexts, reportBrowserTranslationProgress);
         if (translated && translated.some((line) => line && line.trim())) {
