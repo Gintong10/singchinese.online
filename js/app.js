@@ -807,13 +807,8 @@
       return;
     }
     translatorSetupBannerTitle.textContent = "English translation unavailable in this browser";
-    translatorSetupBannerBody.innerHTML =
-      "Use <strong>desktop Chrome 138+</strong>. Enable " +
-      '<a href="chrome://flags/#language-detection-api">language-detection-api</a> and ' +
-      '<a href="chrome://flags/#optimization-guide-on-device-model">optimization-guide-on-device-model</a>, ' +
-      'update <a href="chrome://components/">Optimization Guide On Device Model</a> in ' +
-      "<code>chrome://components/</code>, restart Chrome, then reload this page. " +
-      "Chinese and pinyin still work without it.";
+    translatorSetupBannerBody.textContent =
+      "Songs translated before are saved in a shared cache and will load automatically when available. New songs still need desktop Chrome to create the first English translation.";
   }
 
   function bindTranslatorGestureRetry(enable) {
