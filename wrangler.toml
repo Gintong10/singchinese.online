@@ -1,6 +1,10 @@
 name = "singchinese-online"
+main = "worker.js"
 compatibility_date = "2026-05-29"
-pages_build_output_dir = "."
+
+[assets]
+directory = "."
+binding = "ASSETS"
 
 [[kv_namespaces]]
 binding = "LYRIC_TRANSLATION_CACHE"
